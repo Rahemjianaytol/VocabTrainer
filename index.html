@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>IELTS Vocabulary Trainer</title>
+  <link rel="stylesheet" href="css/style.css">
+  <!-- Preload fonts for performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ============================================================
+     LANDING SCREEN
+     ============================================================ -->
+<div id="landing">
+  <div class="landing-content">
+    <div class="landing-title">IELTS Vocabulary<br>Core Words</div>
+    <div class="landing-sub">高效记忆 · 科学重复 · 精准掌握</div>
+    <div class="landing-credit">
+      此网页为 <strong>Jeffrey</strong> 所开发，不以营利为目的只为大众服务，<br>
+      如果侵权或有好的建议请联系作者：<strong>aytol4ral（vx）</strong>
+    </div>
+
+    <!-- Vintage Aircraft Toggle Switch -->
+    <label class="toggle-wrapper">
+      <input type="checkbox" id="startToggle">
+      <div class="knife-switch">
+        <div class="screw tl"></div>
+        <div class="screw tr"></div>
+        <div class="screw bl"></div>
+        <div class="screw br"></div>
+        <div class="switch-inner">
+          <div class="contact top"></div>
+          <div class="contact bottom"></div>
+          <div class="hinge"></div>
+          <div class="lever">
+            <div class="lever-knob"></div>
+            <div class="lever-body"></div>
+          </div>
+          <span class="switch-label up">OFF</span>
+          <span class="switch-label down">ON</span>
+          <div class="base-glow"></div>
+        </div>
+      </div>
+    </label>
+    <div class="switch-prompt">✦ 拨动开关，开启你的词汇时空之旅 ✦</div>
+    <div class="backup-trigger" id="backupTrigger">⏎ 点此直接进入</div>
+  </div>
+</div>
+
+<!-- ============================================================
+     WORMHOLE OVERLAY
+     ============================================================ -->
+<canvas id="wormhole"></canvas>
+<div class="wormhole-status" id="wormholeStatus">
+  <div class="status-text">⚡ 传送门启动...</div>
+  <div class="status-sub">正在充能粒子加速器</div>
+</div>
+<div class="wormhole-skip" id="wormholeSkip">◇ 按任意键跳过动画 ◇</div>
+
+<!-- ============================================================
+     MAIN APPLICATION
+     ============================================================ -->
+<div id="app">
+  <!-- NAVBAR -->
+  <nav>
+    <span class="nav-brand">✦ VocabTrainer</span>
+    <button class="nav-tab active" data-tab="daily">每日自定义 120 词 <span class="badge">120</span></button>
+    <button class="nav-tab" data-tab="ielts">IELTS 核心词汇 <span class="badge">IELTS</span></button>
+    <div class="nav-actions">
+      <button class="nav-btn" id="hidePanelBtn">👁 隐藏词表</button>
+    </div>
+  </nav>
+
+  <!-- DAILY TAB -->
+  <div class="tab-content active" id="tab-daily">
+    <div class="tab-inner">
+      <div class="tab-header">
+        <h1>每日 <span>自定义</span> 词背诵</h1>
+        <p>把今天要背的单词一次性放进来。系统会打乱顺序，随机听音默写或看义默写。</p>
+      </div>
+      <div class="layout" id="dailyLayout">
+        <section class="panel setup" id="dailySetup">
+          <div class="panel-heading">
+            <h2>今天的词表</h2>
+            <span class="count" id="wordCount">0 / 120</span>
+          </div>
+          <textarea id="wordInput" spellcheck="false" placeholder="每行一个词，英文和中文用 Tab、逗号或 - 分开&#10;&#10;abandon    放弃&#10;resilient   有韧性的&#10;..."></textarea>
+          <p class="hint">支持格式：英文 + Tab + 中文，或英文 - 中文。可直接从 Excel 两列复制粘贴。</p>
+          <div class="actions">
+            <button class="button primary start-btn" type="button">随机开始</button>
+            <button class="button sample-btn" type="button">填入示例</button>
+            <button class="button coral clear-btn" type="button">清空</button>
+          </div>
+          <fieldset class="mode-choice">
+            <legend>默写模式</legend>
+            <label><input type="radio" name="mode" value="audio" checked>1：只听英文发音，然后默写单词</label>
+            <label><input type="radio" name="mode" value="meaning">2：只看中文意思，然后默写单词</label>
+            <label><input type="radio" name="mode" value="mixed">3：听音和看义 完全随机混合</label>
+          </fieldset>
+          <div class="error-summary">
+            <h3>错题本 <span class="count" id="errorCount">0</span></h3>
+            <p>错题会按每次答错的日期保存在当前浏览器中。</p>
+            <button class="button coral error-btn" type="button">进行错题默写</button>
+          </div>
+          <div class="status" id="status" role="status" aria-live="polite"></div>
+        </section>
+        <section class="panel practice" id="dailyPractice">
+          <div class="practice-top">
+            <span>随机练习</span>
+            <span id="progressText">尚未开始</span>
+          </div>
+          <div class="progress" aria-hidden="true"><span id="progressBar"></span></div>
+          <div id="cardArea" class="empty">
+            <div><strong>准备好了吗？</strong>在左侧粘贴词表，然后点击"随机开始"。</div>
+          </div>
+          <div class="tips"><span>🖊 直接输入字母默写</span><span>↵ Enter 下一题</span><span>⌨ R 发音</span><span>⎇ Alt 再来一次</span><span>⌫ Backspace 删除</span></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- IELTS TAB -->
+  <div class="tab-content" id="tab-ielts">
+    <div class="tab-inner">
+      <div class="tab-header">
+        <h1>IELTS <span>核心词汇</span></h1>
+        <p>第一节 · 自然景观 — 涵盖自然环境、地理、动植物、社会、学科等九大分类。</p>
+      </div>
+      <div class="layout" id="ieltsLayout">
+        <section class="panel setup" id="ieltsSetup">
+          <div class="panel-heading">
+            <h2>IELTS 词库</h2>
+            <span class="count" id="ieltsWordCount">已加载</span>
+          </div>
+          <div style="margin-bottom:16px;">
+            <div id="ieltsSections" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;"></div>
+          </div>
+          <p class="hint">选自雅思核心词汇《第一节 自然景观》，共九大分类。点击上方分类可筛选章节。</p>
+          <div class="actions">
+            <button class="button primary ielts-start-btn" type="button">随机开始默写</button>
+            <button class="button" id="ieltsShuffleBtn" type="button">重新打乱</button>
+          </div>
+          <fieldset class="mode-choice">
+            <legend>默写模式</legend>
+            <label><input type="radio" name="ieltsMode" value="audio" checked>1：只听英文发音，然后默写单词</label>
+            <label><input type="radio" name="ieltsMode" value="meaning">2：只看中文意思，然后默写单词</label>
+            <label><input type="radio" name="ieltsMode" value="mixed">3：听音和看义 完全随机混合</label>
+          </fieldset>
+          <div class="error-summary">
+            <h3>错题本 <span class="count" id="ieltsErrorCount">0</span></h3>
+            <p>错题会按每次答错的日期保存在当前浏览器中。</p>
+            <button class="button coral ielts-error-btn" type="button">进行错题默写</button>
+          </div>
+          <div class="status" id="ieltsStatus" role="status" aria-live="polite"></div>
+        </section>
+        <section class="panel practice" id="ieltsPractice">
+          <div class="practice-top">
+            <span>IELTS 练习</span>
+            <span id="ieltsProgressText">尚未开始</span>
+          </div>
+          <div class="progress" aria-hidden="true"><span id="ieltsProgressBar"></span></div>
+          <div id="ieltsCardArea" class="empty">
+            <div><strong>IELTS 核心词汇已就绪</strong>点击"随机开始默写"开始练习。</div>
+          </div>
+          <div class="tips"><span>🖊 直接输入字母默写</span><span>↵ Enter 下一题</span><span>⌨ R 发音</span><span>⎇ Alt 再来一次</span><span>⌫ Backspace 删除</span></div>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Show panel button (for when panel is hidden) -->
+<button class="show-panel-btn" id="showPanelBtn">📖 显示词表</button>
+
+<!-- ============================================================
+     SCRIPTS
+     ============================================================ -->
+<script src="js/data/ielts.js"></script>
+<script src="js/bundle.js"></script>
+</body>
+</html>
