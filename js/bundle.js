@@ -498,6 +498,7 @@ function renderLetterComparison(correctWord, userAnswer) {
     var c = correct[i];
     var a = answer[i];
     if (c === undefined) html += '<span class="slot extra">' + escapeHtml(a.toUpperCase()) + '</span>';
+    else if (c === ' ' && (a === undefined || a === ' ')) html += '<span class="slot space">&nbsp;</span>';
     else if (a === undefined) html += '<span class="slot missing">_</span>';
     else if (c.toLowerCase() === a.toLowerCase()) html += '<span class="slot correct">' + escapeHtml(c.toUpperCase()) + '</span>';
     else html += '<span class="slot wrong">' + escapeHtml(a.toUpperCase()) + '</span>';
@@ -557,7 +558,7 @@ function renderCard(source) {
 
   var promptMode = session.promptMode;
   var prompt = promptMode === 'audio'
-    ? '<span class="prompt-label">请听发音并默写英文</span><br>🔊 点击下方按钮或按 <kbd>R</kbd> 播放发音'
+    ? '<span class="prompt-label">请听发音并默写英文</span><br>🔊 点击下方按钮播放发音<br><button class="button meaning-hint-btn" data-action="hint" type="button">查看中文释义</button> <span class="meaning-hint-text" hidden>' + escapeHtml(word.meaning) + '</span>'
     : '<span class="prompt-label">中文意思</span><br>' + escapeHtml(word.meaning);
 
   var letterHtml = '';
@@ -601,7 +602,7 @@ function renderCard(source) {
       (session.submitted
         ? '<button class="button" data-action="next" type="button">' + (session.index >= total - 1 ? '完成本轮 ✓' : '下一题 →') + '</button>' +
           '<button class="button" data-action="repeat" type="button">🔄 再来一次</button>'
-        : '<span style="color:var(--text-muted);">直接输入字母 · Enter提交 · <kbd style="background:rgba(103,232,249,0.1);padding:1px 6px;border-radius:3px;font-size:11px;">R</kbd> 发音</span>') +
+        : '<span style="color:var(--text-muted);">直接输入英文（短语可含空格）· Enter提交</span>') +
     '</div>';
 
   if (!session.submitted && word) {
@@ -612,11 +613,13 @@ function renderCard(source) {
       var wordLen = Math.max((word.word || '').length, 1);
       var slotsHTML = '';
       for (var s = 0; s < wordLen; s++) {
-        slotsHTML += '<span class="slot empty">_</span>';
+        slotsHTML += word.word.charAt(s) === ' '
+          ? '<span class="slot space">&nbsp;</span>'
+          : '<span class="slot empty">_</span>';
       }
       slotsDiv.innerHTML =
     '<div class="letter-slots" id="liveSlots-' + source + '">' + slotsHTML + '</div>' +
-    '<div style="font:12px -apple-system,sans-serif;color:var(--text-muted);">直接输入字母 · Enter提交 · <kbd style="background:rgba(103,232,249,0.1);padding:1px 4px;border-radius:3px;">R</kbd>发音</div>';
+    '<div style="font:12px -apple-system,sans-serif;color:var(--text-muted);">直接输入英文（短语可含空格）· Enter提交</div>';
       promptEl.after(slotsDiv);
     }
   }
@@ -721,7 +724,9 @@ function renderLiveSlots(source, correctWord, input) {
   for (var i = 0; i < len; i++) {
     var c = correct[i];
     var a = answer[i];
-    if (!a) {
+    if (c === ' ' && (a === undefined || a === ' ')) {
+      html += '<span class="slot space">&nbsp;</span>';
+    } else if (!a) {
       /* Empty slot — show underscore only, never reveal the letter */
       html += '<span class="slot empty">_</span>';
     } else if (!c || c.toLowerCase() !== a.toLowerCase()) {
@@ -734,9 +739,9 @@ function renderLiveSlots(source, correctWord, input) {
 }
 
 function handleSlotSubmit(source, word, session, input) {
-  var answer = input.trim();
+  var answer = input.trim().replace(/\s+/g, ' ');
   session.answer = answer;
-  session.answerCorrect = answer.toLowerCase() === word.word.toLowerCase();
+  session.answerCorrect = answer.toLowerCase() === word.word.trim().replace(/\s+/g, ' ').toLowerCase();
   session.submitted = true;
   delete session.inputBuffer;
 
@@ -952,6 +957,15 @@ document.addEventListener('DOMContentLoaded', function() {
     var action = btn.dataset.action;
     var source = getActiveSource();
 
+    if (action === 'hint') {
+      var meaningHint = btn.nextElementSibling;
+      if (meaningHint) {
+        meaningHint.hidden = !meaningHint.hidden;
+        btn.textContent = meaningHint.hidden ? '查看中文释义' : '隐藏中文释义';
+      }
+      return;
+    }
+
     if (action === 'speak') {
       var session = getSession(source);
       var word = session ? session.words[session ? session.index : 0] : null;
@@ -984,6 +998,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     /* Skip if typing in textarea */
     if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+    if (e.isComposing || e.keyCode === 229) return;
 
     var word = session.words[session.index];
     if (!word) return;
@@ -994,13 +1009,6 @@ document.addEventListener('DOMContentLoaded', function() {
       session.submitted = false;
       session.answer = '';
       renderCard(source);
-      return;
-    }
-
-    /* R key — speak (any time) */
-    if (e.key.toLowerCase() === 'r' && !e.ctrlKey && !e.metaKey) {
-      e.preventDefault();
-      speak(word.word);
       return;
     }
 
@@ -1039,15 +1047,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Single character
-    if (e.key.length === 1 && /^[a-zA-Z\-']$/.test(e.key)) {
+    if ((e.key.length === 1 && /^[a-zA-Z\-']$/.test(e.key)) || e.key === ' ') {
       e.preventDefault();
       var newInput = currentInput + e.key;
       session.inputBuffer = newInput;
       renderLiveSlots(source, word.word, newInput);
-
-      if (newInput.length >= (word.word || '').length) {
-        handleSlotSubmit(source, word, session, newInput);
-      }
       return;
     }
   });

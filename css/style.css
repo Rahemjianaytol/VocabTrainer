@@ -709,6 +709,11 @@ button:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important;
   font-family: var(--font-mono);
   position: relative;
 }
+.slot.space {
+  width: 14px;
+  border-color: transparent;
+  background: transparent;
+}
 .slot.empty {
   border-color: rgba(148, 163, 184, 0.15);
   color: var(--text-muted);

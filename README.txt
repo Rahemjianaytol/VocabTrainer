@@ -92,7 +92,6 @@
 | 快捷键 | 功能 |
 |--------|------|
 | **Enter** | 提交答案 / 下一题 |
-| **R** | 播放发音 |
 | **Alt** | 再来一次（重新开始） |
 
 #### 5. 进度追踪
@@ -137,7 +136,7 @@ self_english_recitation/
 - **解决**：
   - 点击页面任意位置一次（建立用户交互上下文）
   - 手动点击 **"播放发音"** 按钮
-  - 或者按 **R 键** 播放
+  - 或者点击题目下方的 **播放发音** 按钮
   - 建议使用 Chrome 或 Edge 浏览器
 
 ### Q3: 雅思词库没有加载？
@@ -307,8 +306,7 @@ Simply open `index.html` in your browser. **No installation or server required.*
 | Shortcut | Action |
 |----------|--------|
 | **Enter** | Submit answer / Next word |
-| **R** | Play pronunciation |
-| **Alt** | Restart session |
+| **Alt** | Retry the current word |
 
 #### 5. Progress Tracking
 
@@ -352,7 +350,7 @@ self_english_recitation/
 - **Fix**:
   - Click anywhere on the page once (establishes user interaction context)
   - Manually click the **"Play Pronunciation"** button
-  - Or press the **R** key
+  - Or click the **Play Pronunciation** button below the prompt
   - Chrome or Edge is recommended
 
 ### Q3: The IELTS vocabulary didn't load.
