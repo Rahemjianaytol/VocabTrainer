@@ -94,6 +94,7 @@
             <button class="button primary start-btn" type="button">随机开始</button>
             <button class="button sample-btn" type="button">填入示例</button>
             <button class="button coral clear-btn" type="button">清空</button>
+            <button class="button" data-action="manage-history" type="button">词表历史</button>
           </div>
           <fieldset class="mode-choice">
             <legend>默写模式</legend>
@@ -103,8 +104,11 @@
           </fieldset>
           <div class="error-summary">
             <h3>错题本 <span class="count" id="errorCount">0</span></h3>
-            <p>错题会按每次答错的日期保存在当前浏览器中。</p>
-            <button class="button coral error-btn" type="button">进行错题默写</button>
+            <p>错题按词保存，跨天保留；可修正或移除无效词条。</p>
+            <div class="error-summary-actions">
+              <button class="button coral error-btn" type="button">进行错题默写</button>
+              <button class="button" data-action="manage-errors" data-source="daily" type="button">管理错题</button>
+            </div>
           </div>
           <div class="status" id="status" role="status" aria-live="polite"></div>
         </section>
@@ -117,7 +121,7 @@
           <div id="cardArea" class="empty">
             <div><strong>准备好了吗？</strong>在左侧粘贴词表，然后点击"随机开始"。</div>
           </div>
-          <div class="tips"><span>🖊 直接输入英文默写</span><span>↵ Enter 提交 / 下一题</span><span>🔊 点击播放发音</span><span>⎇ Alt 再来一次</span><span>⌫ Backspace 删除</span></div>
+          <div class="tips"><span>🖊 直接输入答案</span><span>↵ Enter 提交 / 下一题</span><span>⌨ Ctrl+A 重播</span><span>🔊 点击播放发音</span><span>⎇ Alt 再来一次</span><span>⌫ Backspace 删除</span></div>
         </section>
       </div>
     </div>
@@ -152,8 +156,11 @@
           </fieldset>
           <div class="error-summary">
             <h3>错题本 <span class="count" id="ieltsErrorCount">0</span></h3>
-            <p>错题会按每次答错的日期保存在当前浏览器中。</p>
-            <button class="button coral ielts-error-btn" type="button">进行错题默写</button>
+            <p>错题按词保存，跨天保留；可修正或移除无效词条。</p>
+            <div class="error-summary-actions">
+              <button class="button coral ielts-error-btn" type="button">进行错题默写</button>
+              <button class="button" data-action="manage-errors" data-source="ielts" type="button">管理错题</button>
+            </div>
           </div>
           <div class="status" id="ieltsStatus" role="status" aria-live="polite"></div>
         </section>
@@ -166,7 +173,7 @@
           <div id="ieltsCardArea" class="empty">
             <div><strong>IELTS 核心词汇已就绪</strong>点击"随机开始默写"开始练习。</div>
           </div>
-          <div class="tips"><span>🖊 直接输入英文默写</span><span>↵ Enter 提交 / 下一题</span><span>🔊 点击播放发音</span><span>⎇ Alt 再来一次</span><span>⌫ Backspace 删除</span></div>
+          <div class="tips"><span>🖊 直接输入答案</span><span>↵ Enter 提交 / 下一题</span><span>⌨ Ctrl+A 重播</span><span>🔊 点击播放发音</span><span>⎇ Alt 再来一次</span><span>⌫ Backspace 删除</span></div>
         </section>
       </div>
     </div>
@@ -175,6 +182,26 @@
 
 <!-- Show panel button (for when panel is hidden) -->
 <button class="show-panel-btn" id="showPanelBtn">📖 显示词表</button>
+
+<dialog class="manager-dialog" id="errorManagerDialog" aria-labelledby="errorManagerTitle">
+  <div class="manager-dialog-content">
+    <header class="manager-dialog-header">
+      <h2 id="errorManagerTitle">错题管理</h2>
+      <button class="button" data-action="close-errors" type="button" aria-label="关闭错题管理">关闭</button>
+    </header>
+    <div class="manager-list" id="errorManagerList"></div>
+  </div>
+</dialog>
+
+<dialog class="manager-dialog" id="dailyHistoryDialog" aria-labelledby="dailyHistoryTitle">
+  <div class="manager-dialog-content">
+    <header class="manager-dialog-header">
+      <h2 id="dailyHistoryTitle">历史词表</h2>
+      <button class="button" data-action="close-history" type="button" aria-label="关闭词表历史">关闭</button>
+    </header>
+    <div class="manager-list" id="dailyHistoryList"></div>
+  </div>
+</dialog>
 
 <!-- ============================================================
      SCRIPTS

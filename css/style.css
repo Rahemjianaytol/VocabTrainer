@@ -615,6 +615,40 @@ button:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important;
   font: 12px/1.6 var(--font);
   margin-bottom: 14px;
 }
+.error-summary-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.manager-dialog {
+  width: min(680px, calc(100% - 28px));
+  max-height: min(82vh, 760px);
+  padding: 0;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+}
+.manager-dialog::backdrop { background: rgba(3, 8, 15, 0.76); backdrop-filter: blur(4px); }
+.manager-dialog-content { display: flex; flex-direction: column; max-height: inherit; padding: 20px; }
+.manager-dialog-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--border-subtle); }
+.manager-dialog-header h2 { margin: 0; font-size: 18px; }
+.manager-list { overflow: auto; padding-top: 4px; }
+.manager-empty { color: var(--text-muted); font-size: 13px; }
+.manager-entry { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 14px 0; border-bottom: 1px solid var(--border-subtle); }
+.manager-entry-main { display: flex; flex: 1 1 240px; min-width: 0; flex-direction: column; gap: 4px; }
+.manager-entry-main strong { overflow-wrap: anywhere; color: var(--text-primary); }
+.manager-entry-main span, .manager-entry-meta { color: var(--text-muted); font-size: 12px; overflow-wrap: anywhere; }
+.manager-entry-actions { display: flex; gap: 6px; }
+.manager-editor { display: grid; flex-basis: 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding-top: 8px; }
+.manager-editor[hidden] { display: none; }
+.manager-editor label { display: grid; gap: 5px; color: var(--text-muted); font-size: 12px; }
+.manager-editor input { width: 100%; min-width: 0; padding: 9px 10px; color: var(--text-primary); background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border-subtle); border-radius: var(--radius); }
+.manager-editor .button { justify-self: start; }
+.history-entry > .button { flex-shrink: 0; }
+
+@media (max-width: 560px) {
+  .manager-dialog-content { padding: 16px; }
+  .manager-editor { grid-template-columns: 1fr; }
+}
 
 .tab-header { margin-bottom: 20px; }
 .tab-header h1 {

@@ -104,24 +104,122 @@ function speak(word) {
 
 /* ============== storage.js ============== */
 var ERROR_KEY = 'daily-120-vocabulary-errors';
+var DAILY_HISTORY_KEY = 'daily-120-vocabulary-history';
+
+function normalizeWordKey(word) {
+  return String(word || '').trim().replace(/\s+/g, ' ').toLowerCase();
+}
 
 function getErrors() {
-  try { return JSON.parse(localStorage.getItem(ERROR_KEY) || '[]'); }
+  var stored;
+  try { stored = JSON.parse(localStorage.getItem(ERROR_KEY) || '[]'); }
   catch (e) { return []; }
+
+  if (!Array.isArray(stored)) return [];
+  var merged = [];
+  for (var i = 0; i < stored.length; i++) {
+    var item = stored[i];
+    if (!item || !item.word) continue;
+    var source = item.source || 'daily';
+    var key = source + '|' + normalizeWordKey(item.word);
+    var existing = null;
+    for (var j = 0; j < merged.length; j++) {
+      if (merged[j]._key === key) { existing = merged[j]; break; }
+    }
+    var attempts = Math.max(1, Number(item.attempts) || 1);
+    if (existing) {
+      existing.attempts += attempts;
+      if (String(item.date || '') >= String(existing.date || '')) {
+        existing.answer = item.answer || existing.answer;
+        existing.date = item.date || existing.date;
+        existing.mode = item.mode || existing.mode;
+        existing.meaning = item.meaning || existing.meaning;
+      }
+    } else {
+      merged.push({
+        _key: key,
+        word: String(item.word).trim().replace(/\s+/g, ' '),
+        meaning: item.meaning || '暂无中文释义',
+        answer: item.answer || '未填写',
+        date: item.date || '',
+        mode: item.mode || 'unknown',
+        source: source,
+        attempts: attempts
+      });
+    }
+  }
+
+  var result = merged.map(function(item) {
+    var copy = Object.assign({}, item);
+    delete copy._key;
+    return copy;
+  });
+  if (JSON.stringify(stored) !== JSON.stringify(result)) {
+    localStorage.setItem(ERROR_KEY, JSON.stringify(result));
+  }
+  return result;
+}
+
+function saveErrors(errors) {
+  localStorage.setItem(ERROR_KEY, JSON.stringify(errors));
+  updateErrorCountUI(
+    document.getElementById('errorCount'),
+    document.getElementById('ieltsErrorCount')
+  );
 }
 
 function saveError(word, answer, mode, source) {
   var errors = getErrors();
-  errors.push({
-    word: word.word,
-    meaning: word.meaning,
-    answer: answer || '未填写',
-    date: new Date().toISOString().slice(0, 10),
-    mode: mode || 'unknown',
-    source: source || 'daily'
+  var sourceName = source || 'daily';
+  var key = normalizeWordKey(word.word);
+  var existing = errors.find(function(item) {
+    return item.source === sourceName && normalizeWordKey(item.word) === key;
   });
-  localStorage.setItem(ERROR_KEY, JSON.stringify(errors));
+  if (existing) {
+    existing.attempts = (Number(existing.attempts) || 1) + 1;
+    existing.meaning = word.meaning || existing.meaning;
+    existing.answer = answer || '未填写';
+    existing.date = new Date().toISOString().slice(0, 10);
+    existing.mode = mode || existing.mode;
+  } else {
+    errors.push({
+      word: word.word,
+      meaning: word.meaning,
+      answer: answer || '未填写',
+      date: new Date().toISOString().slice(0, 10),
+      mode: mode || 'unknown',
+      source: sourceName,
+      attempts: 1
+    });
+  }
+  saveErrors(errors);
   return errors;
+}
+
+function getDailyWordHistory() {
+  try {
+    var history = JSON.parse(localStorage.getItem(DAILY_HISTORY_KEY) || '[]');
+    return Array.isArray(history) ? history : [];
+  } catch (e) { return []; }
+}
+
+function saveDailyWordList(value) {
+  var history = getDailyWordHistory();
+  var current = localStorage.getItem(STORAGE_KEY) || '';
+  var snapshots = [current, value];
+  for (var i = 0; i < snapshots.length; i++) {
+    var content = String(snapshots[i] || '').trim();
+    if (!content) continue;
+    var existing = history.find(function(item) { return item.content === content; });
+    if (existing) {
+      existing.savedAt = new Date().toISOString();
+    } else {
+      history.push({ content: content, savedAt: new Date().toISOString() });
+    }
+  }
+  history.sort(function(a, b) { return new Date(a.savedAt) - new Date(b.savedAt); });
+  localStorage.setItem(DAILY_HISTORY_KEY, JSON.stringify(history.slice(-50)));
+  localStorage.setItem(STORAGE_KEY, value);
 }
 
 function updateErrorCountUI(dailyEl, ieltsEl) {
@@ -558,7 +656,7 @@ function renderCard(source) {
 
   var promptMode = session.promptMode;
   var prompt = promptMode === 'audio'
-    ? '<span class="prompt-label">请听发音并默写英文</span><br>🔊 点击下方按钮播放发音<br><button class="button meaning-hint-btn" data-action="hint" type="button">查看中文释义</button> <span class="meaning-hint-text" hidden>' + escapeHtml(word.meaning) + '</span>'
+    ? '<span class="prompt-label">请听发音并默写英文</span><br>🔊 点击下方按钮或按 Ctrl+A 重播<br><button class="button meaning-hint-btn" data-action="hint" type="button">查看中文释义</button> <span class="meaning-hint-text" hidden>' + escapeHtml(word.meaning) + '</span>'
     : '<span class="prompt-label">中文意思</span><br>' + escapeHtml(word.meaning);
 
   var letterHtml = '';
@@ -602,7 +700,7 @@ function renderCard(source) {
       (session.submitted
         ? '<button class="button" data-action="next" type="button">' + (session.index >= total - 1 ? '完成本轮 ✓' : '下一题 →') + '</button>' +
           '<button class="button" data-action="repeat" type="button">🔄 再来一次</button>'
-        : '<span style="color:var(--text-muted);">直接输入英文（短语可含空格）· Enter提交</span>') +
+        : '<span style="color:var(--text-muted);">直接输入答案 · Enter提交 · Ctrl+A重播</span>') +
     '</div>';
 
   if (!session.submitted && word) {
@@ -619,7 +717,7 @@ function renderCard(source) {
       }
       slotsDiv.innerHTML =
     '<div class="letter-slots" id="liveSlots-' + source + '">' + slotsHTML + '</div>' +
-    '<div style="font:12px -apple-system,sans-serif;color:var(--text-muted);">直接输入英文（短语可含空格）· Enter提交</div>';
+    '<div style="font:12px -apple-system,sans-serif;color:var(--text-muted);">直接输入答案（短语可含空格和标点）· Enter提交 · Ctrl+A重播</div>';
       promptEl.after(slotsDiv);
     }
   }
@@ -769,6 +867,52 @@ function updateDailyCount() {
   count.textContent = total + ' / 120';
 }
 
+var errorManagerSource = 'daily';
+
+function renderErrorManager() {
+  var list = document.getElementById('errorManagerList');
+  var errors = getErrors();
+  var entries = [];
+  for (var i = 0; i < errors.length; i++) {
+    if (errors[i].source === errorManagerSource) entries.push({ error: errors[i], index: i });
+  }
+  if (!entries.length) {
+    list.innerHTML = '<p class="manager-empty">这个词库还没有错题记录。</p>';
+    return;
+  }
+  list.innerHTML = entries.map(function(entry) {
+    var error = entry.error;
+    return '<article class="manager-entry">' +
+      '<div class="manager-entry-main"><strong>' + escapeHtml(error.word) + '</strong>' +
+      '<span>' + escapeHtml(error.meaning || '暂无中文释义') + '</span></div>' +
+      '<div class="manager-entry-meta">累计错答 ' + (Number(error.attempts) || 1) + ' 次 · 最近 ' + escapeHtml(error.date || '未知') + '</div>' +
+      '<div class="manager-entry-actions"><button class="button" data-action="edit-error" data-index="' + entry.index + '" type="button">编辑</button>' +
+      '<button class="button coral" data-action="delete-error" data-index="' + entry.index + '" type="button">删除</button></div>' +
+      '<div class="manager-editor" data-editor="' + entry.index + '" hidden>' +
+      '<label>英文词条<input name="word" value="' + escapeHtml(error.word) + '"></label>' +
+      '<label>中文释义<input name="meaning" value="' + escapeHtml(error.meaning || '') + '"></label>' +
+      '<button class="button primary" data-action="save-error" data-index="' + entry.index + '" type="button">保存修改</button></div>' +
+      '</article>';
+  }).join('');
+}
+
+function renderDailyHistory() {
+  var list = document.getElementById('dailyHistoryList');
+  var history = getDailyWordHistory();
+  if (!history.length) {
+    list.innerHTML = '<p class="manager-empty">还没有已保存的词表历史。开始练习后，词表会自动归档。</p>';
+    return;
+  }
+  list.innerHTML = history.map(function(item, index) {
+    var date = new Date(item.savedAt);
+    var dateText = isNaN(date.getTime()) ? '未知日期' : date.toLocaleString();
+    var preview = item.content.split(/\r?\n/).slice(0, 2).join(' · ');
+    return '<article class="manager-entry history-entry"><div class="manager-entry-main"><strong>' +
+      escapeHtml(dateText) + ' · ' + parseWords(item.content).length + ' 个词</strong><span>' + escapeHtml(preview) +
+      '</span></div><button class="button" data-action="restore-daily-list" data-history-index="' + index + '" type="button">恢复此词表</button></article>';
+  }).reverse().join('');
+}
+
 /* ----- Initialization ----- */
 function init() {
   /* IELTS data is already parsed from embedded string */
@@ -876,7 +1020,7 @@ document.addEventListener('DOMContentLoaded', function() {
     getAudioCtx();
     warmUpSpeech();
     var words = parseWords(document.getElementById('wordInput').value);
-    localStorage.setItem(STORAGE_KEY, document.getElementById('wordInput').value);
+    saveDailyWordList(document.getElementById('wordInput').value);
     startSession(words, 'daily');
   });
 
@@ -957,6 +1101,65 @@ document.addEventListener('DOMContentLoaded', function() {
     var action = btn.dataset.action;
     var source = getActiveSource();
 
+    if (action === 'manage-errors') {
+      errorManagerSource = btn.dataset.source || source;
+      document.getElementById('errorManagerTitle').textContent = errorManagerSource === 'ielts' ? 'IELTS 错题管理' : '自定义词表错题管理';
+      renderErrorManager();
+      document.getElementById('errorManagerDialog').showModal();
+      return;
+    }
+    if (action === 'close-errors') {
+      document.getElementById('errorManagerDialog').close();
+      return;
+    }
+    if (action === 'edit-error') {
+      var editor = document.querySelector('.manager-editor[data-editor="' + btn.dataset.index + '"]');
+      if (editor) editor.hidden = !editor.hidden;
+      return;
+    }
+    if (action === 'save-error') {
+      var errorIndex = Number(btn.dataset.index);
+      var errorList = getErrors();
+      var errorEditor = document.querySelector('.manager-editor[data-editor="' + errorIndex + '"]');
+      if (!errorList[errorIndex] || !errorEditor) return;
+      var correctedWord = errorEditor.querySelector('[name="word"]').value.trim();
+      if (!correctedWord) return;
+      errorList[errorIndex].word = correctedWord.replace(/\s+/g, ' ');
+      errorList[errorIndex].meaning = errorEditor.querySelector('[name="meaning"]').value.trim() || '暂无中文释义';
+      saveErrors(errorList);
+      renderErrorManager();
+      return;
+    }
+    if (action === 'delete-error') {
+      var deleteIndex = Number(btn.dataset.index);
+      var deleteList = getErrors();
+      if (!deleteList[deleteIndex] || !window.confirm('确定从错题本中删除“' + deleteList[deleteIndex].word + '”吗？')) return;
+      deleteList.splice(deleteIndex, 1);
+      saveErrors(deleteList);
+      renderErrorManager();
+      return;
+    }
+    if (action === 'manage-history') {
+      renderDailyHistory();
+      document.getElementById('dailyHistoryDialog').showModal();
+      return;
+    }
+    if (action === 'close-history') {
+      document.getElementById('dailyHistoryDialog').close();
+      return;
+    }
+    if (action === 'restore-daily-list') {
+      var historyIndex = Number(btn.dataset.historyIndex);
+      var history = getDailyWordHistory();
+      if (!history[historyIndex]) return;
+      document.getElementById('wordInput').value = history[historyIndex].content;
+      localStorage.setItem(STORAGE_KEY, history[historyIndex].content);
+      updateDailyCount();
+      document.getElementById('status').textContent = '已恢复历史词表，可直接开始练习。';
+      document.getElementById('dailyHistoryDialog').close();
+      return;
+    }
+
     if (action === 'hint') {
       var meaningHint = btn.nextElementSibling;
       if (meaningHint) {
@@ -1003,6 +1206,12 @@ document.addEventListener('DOMContentLoaded', function() {
     var word = session.words[session.index];
     if (!word) return;
 
+    if (e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'a') {
+      e.preventDefault();
+      speak(word.word);
+      return;
+    }
+
     /* ALT key — repeat (try again) */
     if (e.key === 'Alt' && session.submitted) {
       e.preventDefault();
@@ -1046,8 +1255,8 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
 
-    // Single character
-    if ((e.key.length === 1 && /^[a-zA-Z\-']$/.test(e.key)) || e.key === ' ') {
+    // Printable character
+    if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.length === 1 && e.key.charCodeAt(0) >= 32) {
       e.preventDefault();
       var newInput = currentInput + e.key;
       session.inputBuffer = newInput;
