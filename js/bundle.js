@@ -827,10 +827,8 @@ function renderLiveSlots(source, correctWord, input) {
     } else if (!a) {
       /* Empty slot — show underscore only, never reveal the letter */
       html += '<span class="slot empty">_</span>';
-    } else if (!c || c.toLowerCase() !== a.toLowerCase()) {
-      html += '<span class="slot wrong">' + escapeHtml(a.toUpperCase()) + '</span>';
     } else {
-      html += '<span class="slot filled">' + escapeHtml(a.toUpperCase()) + '</span>';
+      html += '<span class="slot filled">' + (a === ' ' ? '&nbsp;' : escapeHtml(a.toUpperCase())) + '</span>';
     }
   }
   container.innerHTML = html;

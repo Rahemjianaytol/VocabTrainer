@@ -7,7 +7,13 @@
 - **开发者**：[Rahemjianaytoli](https://github.com/Rahemjianaytoli) (个人开发者)
 - **项目名称**：IELTS Vocabulary Trainer
 - **技术栈**：原生 HTML + CSS + JavaScript（零依赖）
-- **许可**：MIT License
+- **许可**：自定义非商业许可（详见仓库根目录 [LICENSE](LICENSE)）
+
+## ⚖️ 使用许可与商业授权
+
+本仓库原创代码和文档仅允许非商业使用。销售、付费服务、商业产品、商业化分发或其他商业用途，须事先取得版权持有人的书面授权。商业合作请通过微信联系：**aytol4real**。
+
+词库、字体及其他第三方素材不一定属于本项目原创，仍按各自许可和权利声明使用。本许可自本次更新后的版本起适用；此前以 MIT 许可公开的版本及基于该版本已取得的权利，不会因本次更新自动撤销。详见仓库根目录 [LICENSE](LICENSE)。
 
 ---
 
@@ -223,7 +229,13 @@ self_english_recitation/
 - **Developer**：[Rahemjianaytoli](https://github.com/Rahemjianaytoli) (Solo Developer)
 - **Project**：IELTS Vocabulary Trainer
 - **Tech Stack**：Vanilla HTML + CSS + JavaScript (Zero Dependencies)
-- **License**：MIT License
+- **License**：Custom Non-Commercial License (see repository root [LICENSE](LICENSE))
+
+## ⚖️ License and Commercial Authorization
+
+The original code and documentation in this repository are available for non-commercial use only. Commercial use, including sales, paid services, commercial products, or monetized distribution, requires prior written authorization from the copyright holder. For licensing inquiries, contact **aytol4real** on WeChat.
+
+Vocabulary data, fonts, and other third-party materials may not be original to this project and remain subject to their own licenses and rights. This license applies to versions published after this update; it does not automatically revoke rights already granted under the MIT license for previously published versions. See the repository-root [LICENSE](LICENSE).
 
 ---
 
